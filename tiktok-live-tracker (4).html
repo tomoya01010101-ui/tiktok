@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#080810">
+<title>🎵 TikTok収益</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:#080810;color:#dde0f0;font-family:'Hiragino Sans','Noto Sans JP',sans-serif;overscroll-behavior:none;}
+input,textarea,button{font-family:inherit;font-size:16px;}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
+input[type=date]::-webkit-calendar-picker-indicator{filter:invert(0.5);}
+::-webkit-scrollbar{display:none;}
+#app{min-height:100vh;padding-bottom:calc(68px + env(safe-area-inset-bottom));}
+/* Bottom Nav */
+.bnav{position:fixed;bottom:0;left:0;right:0;background:#0e0e1c;border-top:1px solid #1e1e32;display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);}
+.bnav button{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px 8px;border:none;background:none;cursor:pointer;color:#555;font-size:10px;gap:3px;}
+.bnav button.on{color:#fe2c55;}
+.bnav button span.ic{font-size:22px;line-height:1;}
+/* FAB */
+.fab{position:fixed;right:18px;bottom:calc(76px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#fe2c55,#b01040);border:none;color:#fff;font-size:28px;cursor:pointer;z-index:99;box-shadow:0 4px 20px #fe2c5566;display:flex;align-items:center;justify-content:center;}
+/* Modal */
+.overlay{position:fixed;inset:0;background:#0009;z-index:200;display:flex;align-items:flex-end;}
+.sheet{background:#12121e;border-radius:20px 20px 0 0;width:100%;max-height:92vh;overflow-y:auto;padding:0 18px calc(24px + env(safe-area-inset-bottom));}
+.handle{width:40px;height:4px;background:#333;border-radius:2px;margin:14px auto 18px;}
+/* Inputs */
+.inp{width:100%;background:#0c0c1a;border:1.5px solid #2a2a40;border-radius:10px;color:#e0e0f0;padding:12px 14px;font-size:16px;outline:none;}
+.inp:focus{border-color:#fe2c5588;}
+.lbl{font-size:12px;color:#777;margin-bottom:6px;display:block;}
+.req{color:#fe2c55;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.pfx{position:relative;}
+.pfx i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#555;font-style:normal;pointer-events:none;}
+.pfx input{padding-left:26px;}
+/* Buttons */
+.btn-p{background:linear-gradient(135deg,#fe2c55,#b01040);border:none;border-radius:12px;color:#fff;padding:14px;font-weight:700;cursor:pointer;font-size:16px;width:100%;}
+/* Cards */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.scard{background:#10101c;border-radius:14px;padding:14px;border:1px solid #1e1e3266;}
+.scard .ic{font-size:20px;margin-bottom:4px;}
+.scard .lb{font-size:10px;color:#555;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;}
+.scard .vl{font-size:20px;font-weight:800;}
+.scard .sb{font-size:11px;color:#555;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* Entry card */
+.ecard{background:#10101c;border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid #1e1e3233;}
+/* Section title */
+.stitle{font-size:12px;font-weight:700;color:#666;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
+/* Chip filters */
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;}
+.chip{padding:6px 14px;border-radius:20px;border:1px solid #333;background:transparent;color:#666;font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.chip.on{background:#fe2c5522;border-color:#fe2c55;color:#fff;font-weight:700;}
+.chip.on2{background:#25f4ee22;border-color:#25f4ee;color:#fff;font-weight:700;}
+/* SVG chart */
+.chart-wrap{width:100%;overflow-x:auto;}
+.grad{background:linear-gradient(90deg,#fe2c55,#25f4ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const SK="tt_entries", RK="tt_rate", DEFAULT_RATE=149.5;
+const NEON="#fe2c55",CYAN="#25f4ee",GOLD="#ffd700",PURPLE="#a78bfa",GRN="#34d399";
+
+const SAMPLE=[
+  {id:1,date:"2025-03-01",title:"朝ライブ",rev:3200,cur:"JPY",view:142,dur:60,plan:"朝の挨拶・近況報告"},
+  {id:2,date:"2025-03-03",title:"夜トーク",rev:5800,cur:"JPY",view:310,dur:90,plan:"フォロワーQ&A企画"},
+  {id:3,date:"2025-03-05",title:"ゲーム配信",rev:2100,cur:"JPY",view:98,dur:45,plan:"マリオカート対戦"},
+  {id:4,date:"2025-03-08",title:"Q&A配信",rev:7400,cur:"JPY",view:420,dur:120,plan:"1万人記念Q&A"},
+  {id:5,date:"2025-03-10",title:"コラボ配信",rev:11200,cur:"JPY",view:680,dur:90,plan:"@user_xとコラボ"},
+  {id:6,date:"2025-03-12",title:"歌配信",rev:6300,cur:"JPY",view:295,dur:75,plan:"リクエスト曲を歌う"},
+  {id:7,date:"2025-03-15",title:"雑談ライブ",rev:4100,cur:"JPY",view:180,dur:60,plan:"最近ハマってること話す"},
+  {id:8,date:"2025-03-18",title:"特別企画",rev:15600,cur:"JPY",view:890,dur:150,plan:"誕生日記念スペシャル"},
+  {id:9,date:"2025-03-20",title:"朝ライブ",rev:3800,cur:"JPY",view:165,dur:60,plan:"週次まとめ報告"},
+  {id:10,date:"2025-03-22",title:"夜トーク",rev:6900,cur:"JPY",view:340,dur:90,plan:"新コーナー初回放送"},
+];
+
+const fmt=n=>`¥${Math.round(n).toLocaleString()}`;
+const fmtM=m=>{if(!m)return"—";const h=Math.floor(m/60),mi=m%60;return h>0?`${h}h${mi>0?`${mi}m`:""}`:`${mi}m`;};
+
+// ── State ──
+let entries=[], rate=DEFAULT_RATE, tab=0, modal=null;
+function load(){
+  try{const s=localStorage.getItem(SK);entries=s?JSON.parse(s):SAMPLE.map(e=>({...e}));}catch{entries=SAMPLE.map(e=>({...e}));}
+  try{const r=localStorage.getItem(RK);if(r)rate=parseFloat(r)||DEFAULT_RATE;}catch{}
+}
+function save(){try{localStorage.setItem(SK,JSON.stringify(entries));}catch{}}
+function saveRate(){try{localStorage.setItem(RK,String(rate));}catch{}}
+
+// ── SVG Bar Chart ──
+function barChart(data, keyX, keyY, color, h=180){
+  if(!data.length)return`<p style="color:#555;text-align:center;padding:30px 0">データなし</p>`;
+  const W=Math.max(data.length*44, 300);
+  const maxV=Math.max(...data.map(d=>d[keyY]),1);
+  const PL=44,PR=10,PT=10,PB=36;
+  const cw=W-PL-PR, ch=h-PT-PB;
+  const bw=Math.min(cw/data.length*0.6,32);
+  const gap=cw/data.length;
+  let bars="",labels="",yLabels="";
+  data.forEach((d,i)=>{
+    const x=PL+gap*i+gap/2;
+    const bh=Math.max((d[keyY]/maxV)*ch,2);
+    const y=PT+ch-bh;
+    bars+=`<rect x="${x-bw/2}" y="${y}" width="${bw}" height="${bh}" rx="4" fill="${color}"/>`;
+    const lbl=String(d[keyX]).length>4?String(d[keyX]).slice(0,4):d[keyX];
+    labels+=`<text x="${x}" y="${h-6}" text-anchor="middle" fill="#555" font-size="10">${lbl}</text>`;
+  });
+  // y axis
+  for(let i=0;i<=4;i++){
+    const v=Math.round(maxV*i/4);
+    const y=PT+ch*(1-i/4);
+    yLabels+=`<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="#1e1e32" stroke-width="1"/>`;
+    const lbl=v>=1000?`${(v/1000).toFixed(0)}k`:v;
+    yLabels+=`<text x="${PL-4}" y="${y+4}" text-anchor="end" fill="#555" font-size="9">${lbl}</text>`;
+  }
+  return`<div class="chart-wrap"><svg width="${W}" height="${h}" style="min-width:100%">${yLabels}${bars}${labels}</svg></div>`;
+}
+
+function lineChart(data, keys, colors, h=180){
+  if(!data.length)return`<p style="color:#555;text-align:center;padding:30px 0">データなし</p>`;
+  const W=Math.max(data.length*44,300);
+  const PL=44,PR=10,PT=10,PB=36;
+  const cw=W-PL-PR,ch=h-PT-PB;
+  const gap=cw/(data.length-1||1);
+  const allVals=keys.flatMap(k=>data.map(d=>d[k]));
+  const maxV=Math.max(...allVals,1);
+  let paths="",dots="",yLabels="";
+  keys.forEach((k,ki)=>{
+    let pts=data.map((d,i)=>{
+      const x=PL+(data.length===1?cw/2:gap*i);
+      const y=PT+ch*(1-d[k]/maxV);
+      return`${x},${y}`;
+    });
+    paths+=`<polyline points="${pts.join(" ")}" fill="none" stroke="${colors[ki]}" stroke-width="2.5"/>`;
+    data.forEach((d,i)=>{
+      const x=PL+(data.length===1?cw/2:gap*i);
+      const y=PT+ch*(1-d[k]/maxV);
+      dots+=`<circle cx="${x}" cy="${y}" r="3" fill="${colors[ki]}"/>`;
+    });
+  });
+  for(let i=0;i<=4;i++){
+    const v=Math.round(maxV*i/4);
+    const y=PT+ch*(1-i/4);
+    yLabels+=`<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="#1e1e32" stroke-width="1"/>`;
+    const lbl=v>=1000?`${(v/1000).toFixed(0)}k`:v;
+    yLabels+=`<text x="${PL-4}" y="${y+4}" text-anchor="end" fill="#555" font-size="9">${lbl}</text>`;
+  }
+  const labels=data.map((d,i)=>{
+    const x=PL+(data.length===1?cw/2:gap*i);
+    return`<text x="${x}" y="${h-6}" text-anchor="middle" fill="#555" font-size="10">${String(d.date||d.month||"").slice(0,5)}</text>`;
+  }).join("");
+  return`<div class="chart-wrap"><svg width="${W}" height="${h}" style="min-width:100%">${yLabels}${paths}${dots}${labels}</svg></div>`;
+}
+
+// ── Computed ──
+function getMonthly(list){
+  const map={};
+  [...list].sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+    const m=e.date.slice(0,7);
+    if(!map[m])map[m]={month:m.slice(5)+"月",rev:0,sessions:0,dur:0,view:0,key:m};
+    map[m].rev+=e.rev; map[m].sessions++; map[m].dur+=e.dur; map[m].view+=e.view;
+  });
+  return Object.values(map);
+}
+function getDaily(list){
+  const map={};
+  [...list].sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+    if(!map[e.date])map[e.date]={date:e.date.slice(5),rev:0};
+    map[e.date].rev+=e.rev;
+  });
+  return Object.values(map);
+}
+
+// ── Render ──
+function render(){
+  const app=document.getElementById("app");
+  const now=new Date();
+  const TY=String(now.getFullYear());
+  const TM=`${TY}-${String(now.getMonth()+1).padStart(2,"0")}`;
+
+  let html="";
+
+  if(tab===0) html=renderHome(now,TY,TM);
+  else if(tab===1) html=renderCharts();
+  else if(tab===2) html=renderList();
+
+  html+=`
+  <nav class="bnav">
+    <button class="${tab===0?"on":""}" onclick="setTab(0)"><span class="ic">🏠</span><span>ホーム</span></button>
+    <button class="${tab===1?"on":""}" onclick="setTab(1)"><span class="ic">📊</span><span>グラフ</span></button>
+    <button class="${tab===2?"on":""}" onclick="setTab(2)"><span class="ic">📋</span><span>一覧</span></button>
+  </nav>`;
+
+  if(tab===0) html+=`<button class="fab" onclick="openModal(null)">＋</button>`;
+  if(modal!==null) html+=renderModal();
+
+  app.innerHTML=html;
+}
+
+function renderHome(now,TY,TM){
+  const mRev=entries.filter(e=>e.date.startsWith(TM)).reduce((s,e)=>s+e.rev,0);
+  const yRev=entries.filter(e=>e.date.startsWith(TY)).reduce((s,e)=>s+e.rev,0);
+  const mDur=entries.filter(e=>e.date.startsWith(TM)).reduce((s,e)=>s+e.dur,0);
+  const avg=entries.length?Math.round(entries.reduce((s,e)=>s+e.rev,0)/entries.length):0;
+  const top=entries.reduce((b,e)=>(!b||e.rev>b.rev)?e:b,null);
+  const recent=[...entries].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+
+  return`<div style="padding:16px 16px 0">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div>
+        <h1 style="font-size:20px;font-weight:900" class="grad">🎵 TikTok Live</h1>
+        <p style="font-size:10px;color:#444;letter-spacing:2px">REVENUE TRACKER</p>
+      </div>
+      <div style="background:#1a1a28;border:1px solid ${GOLD}44;border-radius:10px;padding:8px 12px;cursor:pointer" onclick="toggleRateEdit()">
+        <div id="rate-disp" style="font-size:13px;color:${GOLD};font-weight:700">💱 $1=¥<span id="rate-val">${rate}</span></div>
+        <div id="rate-edit" style="display:none;align-items:center;gap:6px">
+          <span style="font-size:12px;color:#555">$1=¥</span>
+          <input id="rate-inp" type="number" value="${rate}" style="width:60px;background:transparent;border:none;color:${GOLD};font-weight:700;font-size:14px;outline:none" onclick="event.stopPropagation()">
+          <button onclick="saveRateEdit(event)" style="background:${NEON};border:none;border-radius:6px;color:#fff;padding:2px 8px;font-size:12px;cursor:pointer">✓</button>
+        </div>
+      </div>
+    </div>
+    <div class="grid2">
+      ${sc("📅",`今月（${now.getMonth()+1}月）`,fmt(mRev),GOLD)}
+      ${sc("🗓️",`今年（${TY}年）`,fmt(yRev),GRN)}
+      ${sc("⏱️","今月のライブ時間",fmtM(mDur),CYAN)}
+      ${sc("📊","平均収益/配信",fmt(avg),PURPLE)}
+    </div>
+    ${sc("🏆","最高収益配信",top?fmt(top.rev):"—",NEON,top?.title)}
+    <p class="stitle" style="margin-top:16px">最近の配信</p>
+    ${recent.map(e=>`
+    <div class="ecard">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div><div style="font-weight:700;font-size:15px;margin-bottom:3px">${e.title}</div><div style="font-size:12px;color:#555">${e.date}</div></div>
+        <div style="text-align:right"><div style="font-size:17px;font-weight:800;color:${GOLD}">${fmt(e.rev)}</div>${e.dur?`<div style="font-size:11px;color:${CYAN}">${fmtM(e.dur)}</div>`:""}</div>
+      </div>
+      ${e.plan?`<div style="margin-top:8px;font-size:12px;color:#666;background:#0c0c18;border-radius:8px;padding:6px 10px">${e.plan}</div>`:""}
+    </div>`).join("")}
+  </div>`;
+}
+
+// chart state
+let chartView="daily", chartYear="all";
+function renderCharts(){
+  const years=[...new Set(entries.map(e=>e.date.slice(0,4)))].sort();
+  const filtered=chartYear==="all"?entries:entries.filter(e=>e.date.startsWith(chartYear));
+  const daily=getDaily(filtered);
+  const monthly=getMonthly(filtered);
+  let cumRev=0;
+  const cumul=daily.map(d=>({...d,cum:(cumRev+=d.rev)}));
+
+  const views=[["daily","📊 日別"],["growth","📈 伸び"],["monthly","📅 月別"],["duration","⏱️ 時間"]];
+
+  let chartHtml="";
+  if(chartView==="daily"){
+    chartHtml=`<p class="stitle">日別収益</p>${barChart(daily,"date","rev",NEON)}`;
+  } else if(chartView==="growth"){
+    chartHtml=`<p class="stitle">収益の伸び</p>
+    <div style="background:#0d0d1a;border-radius:10px;padding:10px 12px;font-size:12px;color:#555;margin-bottom:12px">🔵 積み上げ = 最初からの合計</div>
+    ${lineChart(cumul,["rev","cum"],[NEON,CYAN])}
+    <div style="display:flex;gap:10px;margin-top:8px;font-size:12px">
+      <span style="color:${NEON}">■ 日別収益</span>
+      <span style="color:${CYAN}">■ 積み上げ</span>
+    </div>`;
+  } else if(chartView==="monthly"){
+    chartHtml=`<p class="stitle">月別収益</p>${barChart(monthly,"month","rev",GOLD)}
+    <p class="stitle" style="margin-top:20px">月別配信回数</p>${barChart(monthly,"month","sessions",NEON,150)}`;
+  } else if(chartView==="duration"){
+    chartHtml=`<p class="stitle">月別ライブ時間（分）</p>${barChart(monthly,"month","dur",CYAN)}
+    <div style="margin-top:16px">${monthly.map(m=>`
+    <div class="ecard">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-weight:800;color:${GOLD};font-size:15px">${m.month}</span>
+        <span style="color:${CYAN};font-size:13px">${fmtM(m.dur)}</span>
+      </div>
+      <div style="display:flex;gap:16px;margin-top:6px;font-size:12px;color:#888">
+        <span>収益: <strong style="color:#eee">${fmt(m.rev)}</strong></span>
+        <span>配信: <strong style="color:#eee">${m.sessions}回</strong></span>
+      </div>
+    </div>`).join("")}</div>`;
+  }
+
+  return`<div style="padding:16px 16px 0">
+    <h2 style="font-size:18px;font-weight:900;margin-bottom:14px" class="grad">グラフ</h2>
+    <div class="chips">${["all",...years].map(y=>`<button class="chip ${chartYear===y?"on":""}" onclick="setChartYear('${y}')">${y==="all"?"すべて":y+"年"}</button>`).join("")}</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:16px">
+      ${views.map(([k,l])=>`<button onclick="setChartView('${k}')" style="background:${chartView===k?NEON+"22":"#10101c"};border:1px solid ${chartView===k?NEON:"#1e1e32"};border-radius:10px;color:${chartView===k?"#fff":"#666"};padding:8px 4px;cursor:pointer;font-size:11px;font-weight:${chartView===k?700:400}">${l}</button>`).join("")}
+    </div>
+    ${chartHtml}
+  </div>`;
+}
+
+// list state
+let listYear="all", listMonth="all";
+function renderList(){
+  const years=[...new Set(entries.map(e=>e.date.slice(0,4)))].sort();
+  const base=listYear==="all"?entries:entries.filter(e=>e.date.startsWith(listYear));
+  const months=[...new Set(base.map(e=>e.date.slice(0,7)))].sort();
+  let filtered=base;
+  if(listMonth!=="all")filtered=filtered.filter(e=>e.date.startsWith(listMonth));
+  filtered=[...filtered].sort((a,b)=>b.date.localeCompare(a.date));
+
+  return`<div style="padding:16px 16px 0">
+    <h2 style="font-size:18px;font-weight:900;margin-bottom:14px" class="grad">配信一覧</h2>
+    <div class="chips">${["all",...years].map(y=>`<button class="chip ${listYear===y?"on":""}" onclick="setListYear('${y}')">${y==="all"?"すべて":y+"年"}</button>`).join("")}</div>
+    <div class="chips">
+      <button class="chip ${listMonth==="all"?"on2":""}" onclick="setListMonth('all')">全月</button>
+      ${months.map(m=>`<button class="chip ${listMonth===m?"on2":""}" onclick="setListMonth('${m}')">${m.slice(5)}月</button>`).join("")}
+    </div>
+    <p style="font-size:12px;color:#555;margin-bottom:12px">${filtered.length}件</p>
+    ${filtered.map(e=>`
+    <div class="ecard">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div style="flex:1;min-width:0;margin-right:10px">
+          <div style="font-weight:700;font-size:15px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.title}</div>
+          <div style="font-size:12px;color:#555">${e.date}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:17px;font-weight:800;color:${GOLD}">${fmt(e.rev)}</div>
+          ${e.cur==="USD"?`<div style="font-size:10px;color:#555">($換算)</div>`:""}
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:${e.plan?8:0}px">
+        ${e.dur?`<span style="font-size:12px;color:${CYAN}">⏱️ ${fmtM(e.dur)}</span>`:""}
+        ${e.view?`<span style="font-size:12px;color:#888">👥 ${e.view.toLocaleString()}人</span>`:""}
+      </div>
+      ${e.plan?`<div style="font-size:12px;color:#666;background:#0c0c18;border-radius:8px;padding:6px 10px;margin-bottom:8px">${e.plan}</div>`:""}
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button onclick="openModal(${e.id})" style="background:none;border:1px solid #333;border-radius:8px;color:#888;padding:6px 14px;cursor:pointer;font-size:13px">✏️ 編集</button>
+        <button onclick="deleteEntry(${e.id})" style="background:none;border:1px solid #2a1020;border-radius:8px;color:#cc4455;padding:6px 14px;cursor:pointer;font-size:13px">🗑️ 削除</button>
+      </div>
+    </div>`).join("")}
+  </div>`;
+}
+
+function renderModal(){
+  const e=modal==="new"?null:entries.find(x=>x.id===modal);
+  const f=e||{date:"",title:"",rev:"",usd:"",cur:"JPY",view:"",dur:"",plan:""};
+  return`<div class="overlay" onclick="closeModal()">
+    <div class="sheet" onclick="event.stopPropagation()">
+      <div class="handle"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <h2 style="font-size:17px;font-weight:800;color:${NEON}">${e?"✏️ 編集":"＋ 配信を追加"}</h2>
+        <button onclick="closeModal()" style="background:none;border:none;color:#666;font-size:24px;cursor:pointer;padding:4px">✕</button>
+      </div>
+      <div style="margin-bottom:14px">
+        <label class="lbl">📅 日付<span class="req"> *</span></label>
+        <input type="date" id="f-date" value="${f.date}" class="inp">
+      </div>
+      <div style="margin-bottom:14px">
+        <label class="lbl">🎙️ 配信タイトル<span class="req"> *</span></label>
+        <input type="text" id="f-title" value="${f.title}" placeholder="例：夜トーク" class="inp">
+      </div>
+      <div class="row2" style="margin-bottom:4px">
+        <div>
+          <label class="lbl">💴 収益（円）<span class="req"> *</span></label>
+          <div class="pfx"><i>¥</i><input type="number" id="f-jpy" value="${f.rev||""}" placeholder="5000" class="inp" oninput="syncUSD()"></div>
+        </div>
+        <div>
+          <label class="lbl">💵 収益（ドル）</label>
+          <div class="pfx"><i>$</i><input type="number" id="f-usd" value="${f.rev?(f.rev/rate).toFixed(2):""}" placeholder="33.00" class="inp" oninput="syncJPY()"></div>
+        </div>
+      </div>
+      <p style="font-size:11px;color:#555;margin-bottom:14px">どちらを入力しても自動換算（$1=¥${rate}）</p>
+      <div class="row2" style="margin-bottom:14px">
+        <div>
+          <label class="lbl">⏱️ ライブ時間（分）</label>
+          <input type="number" id="f-dur" value="${f.dur||""}" placeholder="90" class="inp">
+        </div>
+        <div>
+          <label class="lbl">👥 視聴者数</label>
+          <input type="number" id="f-view" value="${f.view||""}" placeholder="200" class="inp">
+        </div>
+      </div>
+      <div style="margin-bottom:20px">
+        <label class="lbl">📝 企画内容・メモ</label>
+        <textarea id="f-plan" rows="2" placeholder="例：Q&A、コラボ、歌配信など" class="inp" style="resize:none;line-height:1.6">${f.plan||""}</textarea>
+      </div>
+      <button class="btn-p" onclick="saveEntry(${e?e.id:"null"})">${e?"💾 保存する":"✓ 追加する"}</button>
+    </div>
+  </div>`;
+}
+
+function sc(ic,lb,vl,col,sb=""){
+  return`<div class="scard" style="border-color:${col}33">
+    <div class="ic">${ic}</div>
+    <div class="lb">${lb}</div>
+    <div class="vl" style="color:${col}">${vl}</div>
+    ${sb?`<div class="sb">${sb}</div>`:""}
+  </div>`;
+}
+
+// ── Actions ──
+function setTab(t){tab=t;render();}
+function setChartView(v){chartView=v;render();}
+function setChartYear(y){chartYear=y;render();}
+function setListYear(y){listYear=y;listMonth="all";render();}
+function setListMonth(m){listMonth=m;render();}
+function openModal(id){modal=id===null?"new":id;render();}
+function closeModal(){modal=null;render();}
+
+function toggleRateEdit(){
+  const d=document.getElementById("rate-disp");
+  const e=document.getElementById("rate-edit");
+  if(d.style.display==="none"){d.style.display="block";e.style.display="none";}
+  else{d.style.display="none";e.style.display="flex";}
+}
+function saveRateEdit(ev){
+  ev.stopPropagation();
+  const v=parseFloat(document.getElementById("rate-inp").value);
+  if(v>0){rate=v;saveRate();}
+  render();
+}
+
+function syncUSD(){
+  const jpy=parseFloat(document.getElementById("f-jpy").value);
+  const usdEl=document.getElementById("f-usd");
+  if(jpy&&usdEl)usdEl.value=(jpy/rate).toFixed(2);
+}
+function syncJPY(){
+  const usd=parseFloat(document.getElementById("f-usd").value);
+  const jpyEl=document.getElementById("f-jpy");
+  if(usd&&jpyEl)jpyEl.value=Math.round(usd*rate);
+}
+
+function saveEntry(id){
+  const date=document.getElementById("f-date").value;
+  const title=document.getElementById("f-title").value.trim();
+  const jpy=document.getElementById("f-jpy").value;
+  if(!date||!title||!jpy)return alert("日付・タイトル・収益は必須です");
+  const usdVal=document.getElementById("f-usd").value;
+  const cur=usdVal&&!document.getElementById("f-jpy").value?"USD":"JPY";
+  const entry={
+    id:id||Date.now(),date,title,
+    rev:Math.round(Number(jpy)),cur,
+    view:Number(document.getElementById("f-view").value)||0,
+    dur:Number(document.getElementById("f-dur").value)||0,
+    plan:document.getElementById("f-plan").value
+  };
+  if(id){entries=entries.map(e=>e.id===id?entry:e);}
+  else{entries=[...entries,entry];}
+  save();modal=null;render();
+}
+
+function deleteEntry(id){
+  if(entries.length<=1)return;
+  if(confirm("削除しますか？")){entries=entries.filter(e=>e.id!==id);save();render();}
+}
+
+// ── Init ──
+load();render();
+</script>
+</body>
+</html>
